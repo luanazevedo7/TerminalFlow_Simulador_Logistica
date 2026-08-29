@@ -1,62 +1,83 @@
-# 🚚 TerminalFlow - Simulador de Logística e Gargalo em Balança Rodoviária
+# 🚚 TerminalFlow - Simulador de Logística & Dashboard de Análise de Gargalo
 
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![SimPy](https://img.shields.io/badge/SimPy-DES%20Simulation-FF6F00?style=for-the-badge)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?style=for-the-badge&logo=pandas&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Conclu%C3%ADdo-success?style=for-the-badge)
+![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20Dashboard-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-Data%20Visualization-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
 
 ---
 
 ## 📌 Visão Geral do Projeto
 
-O **TerminalFlow** é um simulador de eventos discretos (*Discrete Event Simulation - DES*) desenvolvido em Python com a biblioteca **SimPy**. O objetivo do projeto é modelar e analisar o fluxo operacional de entrada e pesagem de caminhões em um terminal logístico / pátio portuário, identificando a formação de filas e gargalos operacionais em recursos críticos compartilhados (como balanças rodoviárias).
-
-### 🎯 Problema Logístico Abordado
-Em terminais logísticos, a taxa de chegada de veículos é estocástica (aleatória) e o tempo de pesagem/atendimento também sofre variações. Quando a taxa de chegada se aproxima ou supera a capacidade de atendimento da balança, formam-se filas cumulativas que geram atrasos, custos com estadia (*demurrage*) e congestionamentos nas vias de acesso.
-
-O simulador permite:
-- Modelar a chegada aleatória de caminhões via **Distribuição Exponencial** (Processo de Poisson).
-- Simular a variação do tempo de atendimento via **Distribuição Uniforme**.
-- Gerenciar a fila de espera e o atendimento sequencial (FIFO - *First In, First Out*) em uma balança com capacidade limitada.
-- Coletar métricas operacionais individuais por veículo (tempo de fila, tempo de pesagem, momento de entrada e saída).
-- Exportar os dados consolidados em formato **CSV** estruturado através do **Pandas** para análise de dados e tomada de decisão gerencial.
+O **TerminalFlow** é uma solução completa de **Engenharia de Processos e Simulação Logística** que combina:
+1. **Motor de Simulação a Eventos Discretos (*DES*)** em Python com **SimPy**: modela a dinâmica de chegada e pesagem de caminhões em um terminal rodoviário/portuário com recursos compartilhados.
+2. **Dashboard Web Interativo** em **Streamlit** e **Plotly**: transforma os tempos relativos da simulação em horários reais de turno comercial (ex: 08:00 às 16:00), exibindo KPIs executivos, gráficos dinâmicos de evolução da fila e tabela de dados operacionais.
 
 ---
 
-## 🔄 Fluxo de Funcionamento (Diagrama de Estados)
+## 🎯 Problema Logístico & Tomada de Decisão
+
+Em operações portuárias, armazéns e centros de distribuição, o dimensionamento de postos de pesagem (balanças rodoviárias) é crítico. Quando a taxa de chegada de carretas oscila e o tempo de pesagem varia:
+- **Sobrecarga (Gargalo):** Longas filas na portaria, custos de *demurrage* (estadia) e retenção de motoristas.
+- **Ociosidade (Superdimensionamento):** Custos elevados de capital e operação parados.
+
+Com o **TerminalFlow**, você pode testar cenários de capacidade (ex: 1 vs. 2 balanças), simular picos de tráfego e visualizar o impacto direto nos tempos de espera através do dashboard.
+
+---
+
+## 🔄 Fluxo de Arquitetura da Solução
 
 ```mermaid
 flowchart TD
-    A([Início da Simulação / Turno 480 min]) --> B[Gerador de Caminhões]
-    B -->|Sorteia intervalo expovariate| C[Chegada de Novo Caminhão ao Terminal]
-    C --> D[Registra Momento_Chegada]
-    D --> E{Balança Livre?}
-    E -- Não --> F[Aguardando na Fila do Recurso]
-    F --> G[Balança Liberada]
-    E -- Sim --> G
-    G --> H[Calcula Tempo_Fila_min]
-    H --> I[Inicia Pesagem: Sorteia tempo_servico 3 a 6 min]
-    I --> J[Simula Duração do Atendimento timeout]
-    J --> K[Conclui Pesagem & Registra Momento_Saida]
-    K --> L[Libera Recurso da Balança para o Próximo]
-    L --> M[Salva Registro na Lista dados_simulacao]
-    M --> N{Fim do Turno?}
-    N -- Não --> B
-    N -- Sim --> O[Exporta DataFrame para CSV]
-    O --> P([Fim da Simulação])
+    subgraph Simulação ["1. Motor de Simulação (simulador_terminal.py)"]
+        A([Início do Turno]) --> B[Gerador de Chegadas - Poisson / Exponencial]
+        B --> C[Chegada de Caminhão]
+        C --> D{Balanças Livres?}
+        D -- Não --> E[Fila FIFO]
+        E --> F[Pesagem / Atendimento - Uniforme 3-6 min]
+        D -- Sim --> F
+        F --> G[Liberação do Recurso]
+        G --> H[Registro de Métricas: Chegada, Fila, Pesagem, Saída]
+        H --> I[(resultado_gargalo_balanca.csv)]
+    end
+
+    subgraph Dashboard ["2. Inteligência & Visualização (dashboard_logistico.py)"]
+        I --> J[Leitura do CSV com Pandas]
+        J --> K[Transformação de Tempo Relativo em Horário Real HH:MM]
+        K --> L[Cálculo de KPIs: Total, Média de Fila, Pico Máximo]
+        K --> M[Gráfico Interativo Plotly: Fila ao Longo do Turno]
+        K --> N[Tabela Dinâmica de Veículos]
+        L --> O((Painel Streamlit no Navegador))
+        M --> O
+        N --> O
+    end
 ```
 
 ---
 
-## ⚙️ Pré-requisitos e Instalação
+## 📁 Estrutura do Repositório
 
-### 1. Clonar ou Acessar o Diretório
+```text
+TerminalFlow_Simulador_Logistica/
+├── simulador_terminal.py          # Script principal do motor de simulação SimPy
+├── dashboard_logistico.py         # Aplicação web interativa com Streamlit e Plotly
+├── resultado_gargalo_balanca.csv  # Base de dados gerada pela simulação
+├── requirements.txt               # Dependências do projeto
+└── README.md                      # Documentação completa
+```
+
+---
+
+## ⚙️ Instalação e Configuração
+
+### 1. Clonar o Repositório
 ```bash
 git clone <url-do-repositorio>
 cd TerminalFlow_Simulador_Logistica
 ```
 
-### 2. Criar e Ativar Ambiente Virtual (Recomendado)
+### 2. Criar e Ativar o Ambiente Virtual
 - **Windows (PowerShell):**
   ```powershell
   python -m venv .venv
@@ -72,144 +93,152 @@ cd TerminalFlow_Simulador_Logistica
 ```bash
 pip install -r requirements.txt
 ```
-*(Caso prefira instalar diretamente: `pip install simpy pandas`)*
 
 ---
 
-## 🚀 Como Executar
+## 🚀 Como Executar o Projeto
 
-Para rodar a simulação de 8 horas de turno (480 minutos simulados), execute:
-
+### Passo 1: Executar a Simulação
+Gera a base de dados com o histórico de 8 horas de operação (480 minutos simulados):
 ```bash
 python simulador_terminal.py
 ```
+> **Saída esperada:**
+> ```text
+> Rodando simulação...
+> Simulação concluída! 133 caminhões processados.
+> Arquivo 'resultado_gargalo_balanca.csv' gerado com sucesso na sua pasta.
+> ```
 
-### Saída no Terminal:
-```text
-Rodando simulação...
-Simulação concluída! 109 caminhões processados.
-Arquivo 'resultado_gargalo_balanca.csv' gerado com sucesso na sua pasta.
+### Passo 2: Inicializar o Dashboard Interativo
+Abra o painel de controle executivo no seu navegador:
+```bash
+streamlit run dashboard_logistico.py
 ```
+> O Streamlit abrirá automaticamente no endereço: `http://localhost:8501`.
 
 ---
 
-## 📊 Estrutura do Arquivo de Saída (`resultado_gargalo_balanca.csv`)
+## 🖥️ Funcionalidades do Dashboard
 
-O arquivo gerado consolida as métricas de cada veículo que passou pelo terminal:
-
-| Coluna | Tipo | Descrição | Exemplo |
-| :--- | :--- | :--- | :--- |
-| `Veiculo` | String | Identificador exclusivo do caminhão | `Caminhão 001` |
-| `Momento_Chegada` | Float (min) | Instante de chegada no terminal no relógio da simulação | `18.86` |
-| `Tempo_Fila_min` | Float (min) | Tempo de espera na fila antes de ser atendido na balança | `3.86` |
-| `Tempo_Atendimento_min` | Float (min) | Tempo gasto na pesagem e conferência | `3.80` |
-| `Momento_Saida` | Float (min) | Instante em que liberou a balança e saiu do sistema | `26.52` |
+- **Métricas em Destaque (Cards):**
+  - **Total de Caminhões Atendidos:** Quantidade de veículos que concluíram a pesagem no turno.
+  - **Tempo Médio na Fila (min):** Média global de espera dos motoristas.
+  - **Fila Máxima Registrada (min):** O pior caso de gargalo enfrentado durante o turno.
+- **Gráfico de Barras Cronológico Interativo (Plotly):**
+  - Mostra o tempo de espera no eixo Y com base no horário real de chegada (eixo X, ex: `08:15`, `09:30`).
+  - Escala de calor (*Color Scale 'Reds'*) destacando visualmente momentos críticos.
+  - *Tooltips* ao passar o mouse com nome do veículo e tempo exato de atendimento.
+- **Visualizador da Base de Dados Bruta:**
+  - Tabela expansível contendo horários formatados, tempos de serviço e saídas.
 
 ---
 
-## 📖 Explicação Linha por Linha do Código (`simulador_terminal.py`)
+## 📖 Explicação Linha por Linha dos Códigos
 
-Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`simulador_terminal.py`](simulador_terminal.py):
+---
+
+### 🚚 1. `simulador_terminal.py` (54 Linhas)
 
 ```python
 1: import simpy
 ```
-> **Linha 1:** Importa a biblioteca **SimPy**, que fornece o motor de simulação por eventos discretos (`Environment`), gerenciador de recursos (`Resource`) e mecanismos assíncronos baseados em geradores (`yield`).
+> **Linha 1:** Importa o framework **SimPy**, que orquestra o motor de simulação por eventos discretos (`Environment`), recursos com capacidade (`Resource`) e sincronização assíncrona por geradores (`yield`).
 
 ```python
 2: import random
 ```
-> **Linha 2:** Importa o módulo nativo **random** do Python, utilizado para sortear tempos estocásticos de chegada e duração do atendimento através de distribuições estatísticas.
+> **Linha 2:** Importa o módulo **random** para gerar números pseudoaleatórios e modelar probabilidades e distribuições estatísticas.
 
 ```python
 3: import pandas as pd
 ```
-> **Linha 3:** Importa a biblioteca **Pandas** com o alias convencional `pd`, utilizada para converter a lista de dados coletados em uma estrutura tabular (`DataFrame`) e exportá-la para arquivo CSV.
+> **Linha 3:** Importa a biblioteca **Pandas** (`pd`), responsável pela estruturação dos dados em tabelas (`DataFrame`) e exportação para CSV.
 
 ```python
 4: 
 ```
-> **Linha 4:** Linha em branco para separação visual e organização do código.
+> **Linha 4:** Linha em branco para separação visual.
 
 ```python
 5: # 1. Lista vazia para funcionar como nosso banco de dados temporário
 ```
-> **Linha 5:** Comentário descritivo indicando a criação do repositório em memória para os dados gerados durante a simulação.
+> **Linha 5:** Comentário descritivo sobre o armazenamento em memória.
 
 ```python
-6: dados_simulacao = []
+6: dados_simulacao = [] 
 ```
-> **Linha 6:** Cria uma lista Python vazia chamada `dados_simulacao`. Ela atuará como banco de dados temporário em memória, recebendo um dicionário para cada caminhão que concluir a pesagem.
+> **Linha 6:** Declara uma lista vazia global que servirá como acumulador de registros (dicionários) de cada veículo atendido.
 
 ```python
 7: 
 ```
-> **Linha 7:** Linha em branco para organização.
+> **Linha 7:** Linha em branco.
 
 ```python
 8: def caminhao(env, nome, balanca):
 ```
-> **Linha 8:** Define a função geradora `caminhao`, que representa o ciclo de vida e o comportamento de um veículo individual no terminal. Recebe como parâmetros o ambiente de simulação (`env`), o identificador (`nome`) e o recurso da balança (`balanca`).
+> **Linha 8:** Define a função geradora que modela a jornada e ciclo de vida de cada caminhão individual que chega ao terminal.
 
 ```python
 9:     hora_chegada = env.now
 ```
-> **Linha 9:** Captura e armazena na variável local `hora_chegada` o momento exato do relógio de simulação (`env.now`) em que este caminhão entra no terminal e entra na disputa pela balança.
+> **Linha 9:** Salva na variável local o instante do relógio virtual (`env.now`) em que o veículo chega ao terminal.
 
 ```python
 10:     
 ```
-> **Linha 10:** Linha em branco para organização.
+> **Linha 10:** Linha em branco.
 
 ```python
 11:     with balanca.request() as pedido:
 ```
-> **Linha 11:** Utiliza o gerenciador de contexto `with` para criar uma solicitação formal (`pedido`) de uso da balança. O `with` garante que o recurso será liberado automaticamente assim que o bloco for finalizado.
+> **Linha 11:** Requisita formalmente o uso de uma vaga na balança via gerenciador de contexto `with`, garantindo liberação automática ao término do bloco.
 
 ```python
-12:         yield pedido
+12:         yield pedido 
 ```
-> **Linha 12:** Pausa o processo do caminhão e aguarda a concessão do recurso. Se a balança estiver ocupada por outro caminhão, o processo fica retido aqui (formando a fila). Quando a balança é liberada, a execução prossegue.
+> **Linha 12:** Suspende a execução do caminhão caso todas as balanças estejam ocupadas, formando a fila de espera. Quando uma balança desocupa, o SimPy acorda este processo.
 
 ```python
 13:         
 ```
-> **Linha 13:** Linha em branco para organização.
+> **Linha 13:** Linha em branco.
 
 ```python
 14:         tempo_na_fila = env.now - hora_chegada
 ```
-> **Linha 14:** Calcula o tempo total de espera na fila subtraindo o instante atual de entrada na balança (`env.now`) do momento em que o caminhão chegou (`hora_chegada`).
+> **Linha 14:** Calcula o tempo real que o veículo passou aguardando na fila (`momento que entrou na balança - momento da chegada`).
 
 ```python
 15:         tempo_servico = random.uniform(3, 6)
 ```
-> **Linha 15:** Sorteia um número de ponto flutuante entre 3 e 6 minutos utilizando a distribuição uniforme contínua, representando a variabilidade no tempo de pesagem e conferência de documentos.
+> **Linha 15:** Sorteia a duração do atendimento de pesagem através de uma distribuição uniforme contínua entre 3.0 e 6.0 minutos.
 
 ```python
 16:         
 ```
-> **Linha 16:** Linha em branco para organização.
+> **Linha 16:** Linha em branco.
 
 ```python
-17:         yield env.timeout(tempo_servico)
+17:         yield env.timeout(tempo_servico) 
 ```
-> **Linha 17:** Simula a passagem do tempo da pesagem no relógio do SimPy. O processo fica congelado por `tempo_servico` minutos simulados antes de continuar.
+> **Linha 17:** Faz o relógio da simulação avançar pelo período de `tempo_servico`, simulando a duração física da pesagem.
 
 ```python
 18:         hora_saida = env.now
 ```
-> **Linha 18:** Registra o instante exato em que a pesagem terminou e o veículo desocupa a balança.
+> **Linha 18:** Registra o momento em que a pesagem foi concluída e a balança será desocupada.
 
 ```python
 19:         
 ```
-> **Linha 19:** Linha em branco para organização.
+> **Linha 19:** Linha em branco.
 
 ```python
 20:         # 2. Em vez de apenas dar print, salvamos os dados em um dicionário
 ```
-> **Linha 20:** Comentário elucidando a estratégia de retenção de métricas para pós-processamento.
+> **Linha 20:** Comentário explicativo sobre a persistência dos dados.
 
 ```python
 21:         dados_simulacao.append({
@@ -220,47 +249,47 @@ Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`sim
 26:             'Momento_Saida': round(hora_saida, 2)
 27:         })
 ```
-> **Linhas 21 a 27:** Adiciona à lista `dados_simulacao` um dicionário contendo o nome do caminhão e todas as suas métricas arredondadas para 2 casas decimais (`round(..., 2)`).
+> **Linhas 21 a 27:** Adiciona o registro individual com métricas arredondadas em 2 casas decimais à lista `dados_simulacao`.
 
 ```python
 28: 
 ```
-> **Linha 28:** Linha em branco para separação de funções.
+> **Linha 28:** Linha em branco.
 
 ```python
 29: def gerador_de_caminhoes(env, balanca, intervalo_medio_chegada):
 ```
-> **Linha 29:** Define a função geradora `gerador_de_caminhoes`, responsável por criar veículos continuamente durante toda a simulação com base em um intervalo médio de chegadas.
+> **Linha 29:** Define a função geradora que cria os caminhões em fluxo contínuo segundo a distribuição de chegadas.
 
 ```python
 30:     i = 0
 ```
-> **Linha 30:** Inicializa o contador sequencial `i` com o valor zero, utilizado para nomear e ordenar os caminhões gerados.
+> **Linha 30:** Inicializa o contador de identificação dos veículos em zero.
 
 ```python
 31:     while True:
 ```
-> **Linha 31:** Inicia um laço de repetição contínuo que prosseguirá gerando caminhões enquanto a simulação estiver em execução.
+> **Linha 31:** Cria um laço de repetição contínuo que roda enquanto a simulação estiver ativa.
 
 ```python
 32:         i += 1
 ```
-> **Linha 32:** Incrementa o contador em 1 a cada novo caminhão gerado (1, 2, 3...).
+> **Linha 32:** Incrementa o sequencial do veículo (1, 2, 3...).
 
 ```python
 33:         env.process(caminhao(env, f'Caminhão {i:03d}', balanca))
 ```
-> **Linha 33:** Dispara um novo processo independente `caminhao` dentro do ambiente `env`. O identificador é formatado com 3 dígitos (ex: `Caminhão 001`, `Caminhão 002`).
+> **Linha 33:** Dispara um novo processo independente para o caminhão recém-criado, formatando o nome com três dígitos (ex: `Caminhão 001`).
 
 ```python
 34:         tempo_ate_proximo = random.expovariate(1.0 / intervalo_medio_chegada)
 ```
-> **Linha 34:** Sorteia o tempo de espera até a chegada do próximo caminhão através de uma distribuição exponencial com parâmetro $\lambda = 1 / \text{intervalo\_medio\_chegada}$. Esse modelo estatístico representa chegadas aleatórias independentes (Processo de Poisson).
+> **Linha 34:** Sorteia o tempo de espera até a chegada do próximo veículo usando distribuição exponencial com taxa $\lambda = 1 / 4.0$ (Processo de Poisson).
 
 ```python
 35:         yield env.timeout(tempo_ate_proximo)
 ```
-> **Linha 35:** Pausa a execução do gerador pelo intervalo sorteado `tempo_ate_proximo`. Apenas após esse tempo transcorrer no ambiente de simulação é que o próximo caminhão será instanciado.
+> **Linha 35:** Aguarda o tempo sorteado transcorrer no relógio da simulação antes de iterar e gerar o próximo veículo.
 
 ```python
 36: 
@@ -272,12 +301,12 @@ Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`sim
 38: # 3. Executando e Exportando
 39: # ==========================================
 ```
-> **Linhas 37 a 39:** Cabeçalho de comentários indicando o bloco principal de configuração, inicialização e exportação da simulação.
+> **Linhas 37 a 39:** Cabeçalho visual demarcando a seção principal de execução.
 
 ```python
 40: print("Rodando simulação...")
 ```
-> **Linha 40:** Exibe no console a mensagem de início do processamento.
+> **Linha 40:** Emite mensagem informativa no terminal avisando o início da execução.
 
 ```python
 41: 
@@ -287,17 +316,17 @@ Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`sim
 ```python
 42: env = simpy.Environment()
 ```
-> **Linha 42:** Cria a instância principal do ambiente SimPy (`Environment`), responsável por manter o relógio interno (`env.now`) e a fila de prioridades dos eventos agendados.
+> **Linha 42:** Cria a instância principal do ambiente SimPy.
 
 ```python
-43: balanca = simpy.Resource(env, capacity=1) # Capacidade = 1 balança
+43: balanca = simpy.Resource(env, capacity=2) # Capacidade = 2 balanças
 ```
-> **Linha 43:** Cria o recurso compartilhado `balanca` com capacidade igual a 1 (`capacity=1`), o que significa que apenas um caminhão pode ser atendido por vez.
+> **Linha 43:** Cria o recurso compartilhado `balanca` com capacidade de atendimento simultâneo para 2 caminhões (`capacity=2`).
 
 ```python
 44: env.process(gerador_de_caminhoes(env, balanca, intervalo_medio_chegada=4))
 ```
-> **Linha 44:** Registra e inicializa o processo do `gerador_de_caminhoes` no ambiente, parametrizando a taxa média de chegadas para 1 caminhão a cada 4 minutos.
+> **Linha 44:** Inicia o gerador de caminhões no ambiente, configurando o tempo médio entre chegadas para 4 minutos.
 
 ```python
 45: 
@@ -307,12 +336,12 @@ Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`sim
 ```python
 46: # Vamos rodar por mais tempo para gerar mais dados (ex: 8 horas de turno = 480 minutos)
 ```
-> **Linha 46:** Comentário explicativo informando a duração adotada para o turno simulado.
+> **Linha 46:** Comentário sobre o horizonte temporal de simulação.
 
 ```python
-47: env.run(until=480)
+47: env.run(until=480) 
 ```
-> **Linha 47:** Inicia a execução contínua do motor do SimPy até que o relógio virtual atinja a marca de 480 minutos (correspondente a 8 horas de operação).
+> **Linha 47:** Executa o motor da simulação até o relógio atingir 480 minutos virtuais (8 horas).
 
 ```python
 48: 
@@ -322,17 +351,17 @@ Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`sim
 ```python
 49: # 4. Transformando os dados em um DataFrame e exportando para CSV
 ```
-> **Linha 49:** Comentário de seção sobre a persistência dos resultados.
+> **Linha 49:** Comentário da etapa de exportação.
 
 ```python
 50: df_resultados = pd.DataFrame(dados_simulacao)
 ```
-> **Linha 50:** Converte a lista de dicionários `dados_simulacao` em um `DataFrame` estruturado do Pandas contendo colunas tabuladas.
+> **Linha 50:** Converte a lista `dados_simulacao` em um DataFrame tabular do Pandas.
 
 ```python
 51: df_resultados.to_csv('resultado_gargalo_balanca.csv', index=False)
 ```
-> **Linha 51:** Grava o DataFrame no disco local no arquivo `resultado_gargalo_balanca.csv`. O parâmetro `index=False` evita que o índice numérico sequencial padrão do Pandas seja gravado como uma coluna extra no CSV.
+> **Linha 51:** Salva os resultados no arquivo `resultado_gargalo_balanca.csv` sem incluir a coluna de índice do Pandas.
 
 ```python
 52: 
@@ -342,173 +371,232 @@ Abaixo está o detalhamento minucioso de cada uma das 54 linhas do arquivo [`sim
 ```python
 53: print(f"Simulação concluída! {len(df_resultados)} caminhões processados.")
 ```
-> **Linha 53:** Imprime no console a mensagem de sucesso da simulação com a quantidade total de veículos que concluíram a pesagem durante o turno (`len(df_resultados)`).
+> **Linha 53:** Exibe no terminal a quantidade total de caminhões atendidos durante o turno.
 
 ```python
 54: print("Arquivo 'resultado_gargalo_balanca.csv' gerado com sucesso na sua pasta.")
 ```
-> **Linha 54:** Imprime a confirmação de que o arquivo CSV foi criado no diretório de execução.
+> **Linha 54:** Confirma a gravação com sucesso do arquivo CSV.
 
 ---
 
-## 🏷️ Dicionário de Variáveis & Exemplificação Prática
+### 📊 2. `dashboard_logistico.py` (63 Linhas)
 
-Nesta seção, todas as variáveis presentes no projeto são catalogadas com seu **tipo de dado**, **escopo**, **função no sistema** e um **exemplo prático de valor real**.
-
----
-
-### 1. `dados_simulacao`
-- **Tipo:** `list` (Lista de dicionários / `List[dict]`)
-- **Escopo:** Global
-- **O que é:** Estrutura de dados que atua como histórico acumulativo em memória durante a execução da simulação.
-- **Exemplo de Valor:**
-  ```python
-  [
-      {
-          'Veiculo': 'Caminhão 001',
-          'Momento_Chegada': 0.0,
-          'Tempo_Fila_min': 0.0,
-          'Tempo_Atendimento_min': 4.67,
-          'Momento_Saida': 4.67
-      },
-      {
-          'Veiculo': 'Caminhão 002',
-          'Momento_Chegada': 16.79,
-          'Tempo_Fila_min': 0.0,
-          'Tempo_Atendimento_min': 5.93,
-          'Momento_Saida': 22.72
-      }
-  ]
-  ```
-
----
-
-### 2. `env`
-- **Tipo:** `simpy.core.Environment` (Objeto do SimPy)
-- **Escopo:** Global e passado como argumento nas funções
-- **O que é:** O ambiente central do SimPy que coordena a linha do tempo, a fila de eventos futuros e o relógio virtual da simulação (`env.now`).
-- **Exemplo de Valor:** Objeto de simulação com `env.now = 0.0` no início e `env.now = 480.0` no final.
-
----
-
-### 3. `balanca`
-- **Tipo:** `simpy.resources.resource.Resource` (Recurso com Capacidade)
-- **Escopo:** Global e passado como argumento
-- **O que é:** Representa a infraestrutura física da balança rodoviária do terminal. Possui capacidade unitária (`capacity=1`), atendendo apenas 1 caminhão simultaneamente e colocando os demais em fila (`balanca.queue`).
-- **Exemplo de Valor:** Objeto `simpy.Resource(capacity=1, count=1)` quando em uso.
-
----
-
-### 4. `nome`
-- **Tipo:** `str` (String / Texto)
-- **Escopo:** Parâmetro local da função `caminhao`
-- **O que é:** Identificador único textual atribuído a cada caminhão gerado no sistema.
-- **Exemplo de Valor:** `'Caminhão 001'`, `'Caminhão 042'`, `'Caminhão 109'`.
-
----
-
-### 5. `hora_chegada`
-- **Tipo:** `float` (Número Decimal / Ponto Flutuante)
-- **Escopo:** Variável local da função `caminhao`
-- **O que é:** Armazena o instante (em minutos) do relógio da simulação em que o veículo chega ao terminal e entra na fila da balança.
-- **Exemplo de Valor:** `18.86` *(significa que o caminhão chegou aos 18 minutos e 51 segundos de operação)*.
-
----
-
-### 6. `pedido`
-- **Tipo:** `simpy.resources.resource.Request` (Objeto de Requisição)
-- **Escopo:** Variável local do bloco `with` na função `caminhao`
-- **O que é:** Token/solicitação de acesso ao recurso da balança. Garante a ordem de atendimento e o bloqueio/desbloqueio seguro do recurso.
-- **Exemplo de Valor:** `<Request() of Resource(capacity=1)>`.
-
----
-
-### 7. `tempo_na_fila`
-- **Tipo:** `float` (Número Decimal)
-- **Escopo:** Variável local da função `caminhao`
-- **O que é:** Diferença entre o momento em que a pesagem efetivamente começa e o momento em que o veículo chegou (`env.now - hora_chegada`).
-- **Exemplo de Valor:** `3.86` *(caminhão esperou 3,86 minutos na fila antes da balança ser liberada)*.
-
----
-
-### 8. `tempo_servico`
-- **Tipo:** `float` (Número Decimal)
-- **Escopo:** Variável local da função `caminhao`
-- **O que é:** Duração sorteada aleatoriamente entre 3.0 e 6.0 minutos para a pesagem do caminhão.
-- **Exemplo de Valor:** `4.67` *(tempo de atendimento de 4 minutos e 40 segundos)*.
-
----
-
-### 9. `hora_saida`
-- **Tipo:** `float` (Número Decimal)
-- **Escopo:** Variável local da função `caminhao`
-- **O que é:** Instante do relógio da simulação em que o caminhão termina a pesagem e libera a balança.
-- **Exemplo de Valor:** `26.52` *(cálculo: $18.86 + 3.86 + 3.80 = 26.52$ min)*.
-
----
-
-### 10. `intervalo_medio_chegada`
-- **Tipo:** `int` ou `float` (Numérico)
-- **Escopo:** Parâmetro da função `gerador_de_caminhoes`
-- **O que é:** Média de tempo esperada entre duas chegadas consecutivas de caminhões. É o parâmetro de escala da distribuição exponencial.
-- **Exemplo de Valor:** `4` *(em média, chega um caminhão a cada 4 minutos)*.
-
----
-
-### 11. `i`
-- **Tipo:** `int` (Número Inteiro)
-- **Escopo:** Variável local da função `gerador_de_caminhoes`
-- **O que é:** Contador sequencial que gera os números dos caminhões no formato `f'Caminhão {i:03d}'`.
-- **Exemplo de Valor:** `1`, `2`, `3`, ..., `109`.
-
----
-
-### 12. `tempo_ate_proximo`
-- **Tipo:** `float` (Número Decimal)
-- **Escopo:** Variável local da função `gerador_de_caminhoes`
-- **O que é:** Intervalo de tempo estocástico sorteado pela distribuição exponencial que define quanto tempo o gerador aguarda antes de criar o próximo caminhão.
-- **Exemplo de Valor:** `2.15` minutos, `0.45` minutos, `7.82` minutos.
-
----
-
-### 13. `df_resultados`
-- **Tipo:** `pandas.DataFrame` (Tabela de Dados Bidimensional)
-- **Escopo:** Global
-- **O que é:** Tabela estruturada com linhas (veículos) e colunas (métricas), gerada a partir da lista `dados_simulacao`.
-- **Exemplo de Valor:**
-  ```text
-            Veiculo  Momento_Chegada  Tempo_Fila_min  Tempo_Atendimento_min  Momento_Saida
-  0   Caminhão 001             0.00            0.00                   4.67           4.67
-  1   Caminhão 002            16.79            0.00                   5.93          22.72
-  2   Caminhão 003            18.86            3.86                   3.80          26.52
-  ...          ...              ...             ...                    ...            ...
-  ```
-
----
-
-## 📈 Análise de Gargalo Logístico & Extensões
-
-Ao analisar o arquivo CSV de saída, é possível responder perguntas fundamentais de engenharia de processos e logística:
-1. **Identificação de Gargalo:** O tempo médio de atendimento (4.5 min) é superior ao intervalo médio de chegada (4.0 min)? Se sim, a fila crescerá indefinidamente ao longo do tempo.
-2. **Dimensionamento de Recursos:** O que acontece com a fila se aumentarmos a capacidade para `capacity=2` balanças?
-3. **Análise de Nível de Serviço (SLA):** Qual porcentagem dos caminhões esperou mais de 15 minutos na fila?
-
-### 💡 Experimentações Sugeridas
-No arquivo [`simulador_terminal.py`](simulador_terminal.py), experimente alterar:
 ```python
-# Cenário A: Adicionar uma 2ª balança no terminal
-balanca = simpy.Resource(env, capacity=2)
-
-# Cenário B: Horário de pico (chegada média a cada 2 minutos)
-env.process(gerador_de_caminhoes(env, balanca, intervalo_medio_chegada=2))
-
-# Cenário C: Otimização de pesagem automatizada (tempo entre 1.5 e 3 min)
-tempo_servico = random.uniform(1.5, 3.0)
+1: import streamlit as st
 ```
+> **Linha 1:** Importa o framework **Streamlit** (`st`) para criação da interface web interativa e dos componentes visuais.
+
+```python
+2: import pandas as pd
+```
+> **Linha 2:** Importa a biblioteca **Pandas** (`pd`) para carregar o CSV, manipular séries temporais e calcular métricas estatísticas.
+
+```python
+3: import plotly.express as px
+```
+> **Linha 3:** Importa o módulo de alto nível **Plotly Express** (`px`) para geração de gráficos dinâmicos, responsivos e interativos.
+
+```python
+4: 
+```
+> **Linha 4:** Linha em branco.
+
+```python
+5: st.set_page_config(page_title="Dashboard de Simulação Logística", layout="wide")
+```
+> **Linha 5:** Configura a página web do Streamlit: define o título da aba do navegador e adota o layout em largura total (`wide`) para melhor distribuição dos gráficos.
+
+```python
+6: st.title("🚛 Dashboard: Análise de Gargalos no Terminal")
+```
+> **Linha 6:** Renderiza o título principal no topo da página.
+
+```python
+7: st.markdown("Visualização dos dados gerados pelo modelo de simulação no SimPy.")
+```
+> **Linha 7:** Adiciona uma descrição em texto markdown contextualizando a aplicação.
+
+```python
+8: 
+```
+> **Linha 8:** Linha em branco.
+
+```python
+9: try:
+```
+> **Linha 9:** Inicia um bloco de tratamento de exceções `try/except` para garantir que o dashboard lide graciosamente com a ausência do arquivo CSV.
+
+```python
+10:     df = pd.read_csv('resultado_gargalo_balanca.csv')
+```
+> **Linha 10:** Lê o arquivo CSV gerado pelo simulador e o carrega em um DataFrame `df`.
+
+```python
+11:     
+12:     # ==========================================
+13:     # A MÁGICA DA TRANSFORMAÇÃO DE DADOS AQUI
+14:     # ==========================================
+```
+> **Linhas 11 a 14:** Separador de seção sobre a conversão de tempo relativo para tempo absoluto.
+
+```python
+15:     # 1. Definimos a hora que o turno começa (ex: 08:00 da manhã de hoje)
+16:     hora_inicio_turno = pd.to_datetime('08:00:00')
+```
+> **Linha 16:** Cria um objeto `Timestamp` representando o início das operações do terminal às `08:00:00`.
+
+```python
+17:     
+18:     # 2. Somamos os minutos corridos da simulação a essa hora de início
+19:     df['Hora_Exata_Chegada'] = hora_inicio_turno + pd.to_timedelta(df['Momento_Chegada'], unit='m')
+20:     df['Hora_Exata_Saida'] = hora_inicio_turno + pd.to_timedelta(df['Momento_Saida'], unit='m')
+```
+> **Linhas 19 e 20:** Converte os minutos corridos da simulação (`unit='m'`) em intervalos de tempo (`Timedelta`) e os soma ao horário base de início (`08:00`), gerando as colunas de data/hora absolutas de chegada e saída de cada veículo.
+
+```python
+21:     
+22:     # 3. Formatamos para ficar bonito de ler (Apenas Hora:Minuto)
+23:     df['Chegada_Formatada'] = df['Hora_Exata_Chegada'].dt.strftime('%H:%M')
+24:     df['Saida_Formatada'] = df['Hora_Exata_Saida'].dt.strftime('%H:%M')
+```
+> **Linhas 23 e 24:** Formata as datas/horas em strings no padrão legível `HH:MM` (ex: `08:35`, `14:12`) para uso amigável nos eixos dos gráficos e tabelas.
+
+```python
+25:     
+26:     # ==========================================
+27: 
+28:     col1, col2, col3 = st.columns(3)
+```
+> **Linha 28:** Divide o layout da página em 3 colunas horizontais para exibir os cards de indicadores operacionais (*KPIs*).
+
+```python
+29:     
+30:     total_veiculos = len(df)
+31:     tempo_medio_fila = df['Tempo_Fila_min'].mean()
+32:     tempo_maximo_fila = df['Tempo_Fila_min'].max()
+```
+> **Linhas 30 a 32:** Calcula as principais métricas agregadas da simulação: total de veículos processados, tempo médio de espera e tempo máximo de espera registrado.
+
+```python
+33:     
+34:     col1.metric("Total de Caminhões Atendidos", total_veiculos)
+35:     col2.metric("Tempo Médio na Fila (min)", f"{tempo_medio_fila:.1f}")
+36:     col3.metric("Fila Máxima Registrada (min)", f"{tempo_maximo_fila:.1f}")
+```
+> **Linhas 34 a 36:** Renderiza os cards visuais de métricas em cada uma das 3 colunas configuradas.
+
+```python
+37:     
+38:     st.divider() 
+```
+> **Linha 38:** Insere uma linha divisória visual horizontal na página.
+
+```python
+39:     
+40:     st.subheader("Evolução da Fila ao Longo do Tempo")
+```
+> **Linha 40:** Adiciona o subtítulo da seção do gráfico temporal.
+
+```python
+41:     
+42:     # Atualizamos o gráfico para usar a nossa nova coluna formatada no eixo X
+43:     fig = px.bar(
+44:         df, 
+45:         x='Chegada_Formatada', # Agora o eixo X mostra horários como 08:15, 09:30
+46:         y='Tempo_Fila_min',
+47:         hover_data=['Veiculo', 'Tempo_Atendimento_min'],
+48:         labels={'Chegada_Formatada': 'Horário de Chegada', 'Tempo_Fila_min': 'Tempo de Espera na Fila (min)'},
+49:         color='Tempo_Fila_min',
+50:         color_continuous_scale='Reds' 
+51:     )
+```
+> **Linhas 43 a 51:** Constrói o gráfico de barras interativo com **Plotly Express**, mapeando o horário no eixo X, o tempo de fila no eixo Y, dados adicionais no tooltip ao passar o mouse (`hover_data`) e gradiente de cores térmico (`Reds`).
+
+```python
+52:     
+53:     # Ajuste para as barras não ficarem espremidas e manter a ordem cronológica
+54:     fig.update_xaxes(type='category', tickmode='linear', dtick=10) 
+```
+> **Linha 54:** Ajusta a formatação do eixo X para exibir os rótulos de forma espaçada a cada 10 registros (`dtick=10`), prevenindo poluição visual.
+
+```python
+55:     
+56:     st.plotly_chart(fig, use_container_width=True)
+```
+> **Linha 56:** Renderiza o gráfico do Plotly no Streamlit ocupando a largura total do container.
+
+```python
+57:     
+58:     with st.expander("Ver Base de Dados Bruta"):
+59:         # Mostramos as colunas novas que são mais fáceis de ler
+60:         st.dataframe(df[['Veiculo', 'Chegada_Formatada', 'Tempo_Fila_min', 'Tempo_Atendimento_min', 'Saida_Formatada']])
+```
+> **Linhas 58 a 60:** Cria um componente expansível (`expander`) contendo a tabela de dados formatada para inspeção detalhada de cada caminhão.
+
+```python
+61: 
+62: except FileNotFoundError:
+63:     st.error("O arquivo 'resultado_gargalo_balanca.csv' não foi encontrado. Rode o seu script de simulação primeiro!")
+```
+> **Linhas 62 e 63:** Captura o erro caso o CSV ainda não tenha sido gerado e exibe um alerta vermelho amigável instruindo a rodar a simulação primeiro.
+
+---
+
+## 🏷️ Dicionário & Guia Completo de Variáveis com Exemplificação
+
+---
+
+### 📦 A. Variáveis do Simulador (`simulador_terminal.py`)
+
+| Variável | Tipo | Escopo | Descrição & Papel no Sistema | Exemplo Real |
+| :--- | :--- | :--- | :--- | :--- |
+| `dados_simulacao` | `list` (`List[dict]`) | Global | Lista acumuladora em memória que guarda o histórico de cada veículo atendido. | `[{'Veiculo': 'Caminhão 001', 'Momento_Chegada': 0.0, 'Tempo_Fila_min': 0.0, 'Tempo_Atendimento_min': 4.67, 'Momento_Saida': 4.67}, ...]` |
+| `env` | `simpy.Environment` | Global / Parâmetro | O motor do SimPy que coordena o relógio virtual (`env.now`) e a lista de eventos futuros. | `<Environment() at 0x...>` com `env.now = 480.0` no encerramento |
+| `balanca` | `simpy.Resource` | Global / Parâmetro | O recurso físico com capacidade limitada (`capacity=2`) disputado pelos caminhões. | `<Resource(capacity=2, count=1)>` |
+| `nome` | `str` | Local (`caminhao`) | Identificador textual atribuído sequencialmente a cada caminhão. | `'Caminhão 001'`, `'Caminhão 042'` |
+| `hora_chegada` | `float` | Local (`caminhao`) | Instante em minutos da simulação no qual o veículo adentrou a fila do terminal. | `18.86` (18 min e 51 seg de turno) |
+| `pedido` | `simpy.Request` | Local (`caminhao`) | Token de requisição ao recurso da balança usado dentro do bloco `with`. | `<Request() of Resource(capacity=2)>` |
+| `tempo_na_fila` | `float` | Local (`caminhao`) | Tempo decorrido entre a chegada do veículo e o início efetivo da pesagem (`env.now - hora_chegada`). | `2.45` minutos |
+| `tempo_servico` | `float` | Local (`caminhao`) | Duração sorteada aleatoriamente (uniforme 3 a 6 min) para pesagem e conferência. | `4.67` minutos |
+| `hora_saida` | `float` | Local (`caminhao`) | Instante em que o caminhão desocupou a balança e saiu do terminal. | `26.52` minutos |
+| `intervalo_medio_chegada` | `int` ou `float` | Parâmetro (`gerador`) | Média de tempo esperada entre a chegada de dois caminhões consecutivos ($\lambda = 1/4$). | `4` minutos |
+| `i` | `int` | Local (`gerador`) | Contador numérico sequencial para indexação dos veículos criados. | `1, 2, 3, ..., 133` |
+| `tempo_ate_proximo` | `float` | Local (`gerador`) | Intervalo sorteado pela distribuição exponencial até o próximo veículo chegar. | `3.18` minutos |
+| `df_resultados` | `pd.DataFrame` | Global | Tabela estruturada final criada para exportação em formato `.csv`. | DataFrame com 133 linhas e 5 colunas |
+
+---
+
+### 📊 B. Variáveis do Dashboard (`dashboard_logistico.py`)
+
+| Variável | Tipo | Escopo | Descrição & Papel no Sistema | Exemplo Real |
+| :--- | :--- | :--- | :--- | :--- |
+| `df` | `pd.DataFrame` | Global | Conjunto de dados tabulado carregado a partir de `resultado_gargalo_balanca.csv`. | Tabela com colunas originais e colunas calculadas de horário |
+| `hora_inicio_turno` | `pd.Timestamp` | Global | Horário base de abertura do turno operacional para conversão em horas reais. | `Timestamp('2026-08-29 08:00:00')` |
+| `df['Hora_Exata_Chegada']` | `pd.Series` (`datetime64`) | Coluna do DataFrame | Data/hora absoluta da chegada resultante da soma de `08:00` + minutos de simulação. | `Timestamp('2026-08-29 08:18:51')` |
+| `df['Hora_Exata_Saida']` | `pd.Series` (`datetime64`) | Coluna do DataFrame | Data/hora absoluta da saída do terminal. | `Timestamp('2026-08-29 08:26:31')` |
+| `df['Chegada_Formatada']` | `pd.Series` (`object` / `str`) | Coluna do DataFrame | Horário de chegada formatado em string amigável `HH:MM`. | `'08:18'`, `'09:45'`, `'15:20'` |
+| `df['Saida_Formatada']` | `pd.Series` (`object` / `str`) | Coluna do DataFrame | Horário de liberação da balança formatado em string `HH:MM`. | `'08:26'`, `'09:51'`, `'15:27'` |
+| `col1, col2, col3` | `streamlit.delta_generator` | Global | Referências para as 3 colunas de layout criadas por `st.columns(3)`. | Contêineres visuais do Streamlit |
+| `total_veiculos` | `int` | Global | Contagem total de caminhões processados durante a simulação (`len(df)`). | `133` |
+| `tempo_medio_fila` | `float` | Global | Média aritmética do tempo de espera na fila de todos os caminhões (`mean()`). | `1.8` minutos |
+| `tempo_maximo_fila` | `float` | Global | Maior tempo individual de espera registrado na fila (`max()`). | `8.6` minutos |
+| `fig` | `plotly.graph_objs.Figure` | Global | Objeto de figura gráfica do Plotly contendo o gráfico de barras interativo. | Objeto de gráfico com eixos, cores e tooltips |
+
+---
+
+## 📈 Estudo de Caso: Comparativo de Capacidade (1 vs. 2 Balanças)
+
+Ao simular 8 horas de operação com chegada média a cada 4 minutos e pesagem entre 3 e 6 minutos (média de 4.5 minutos):
+
+| Cenário | Capacidade da Balança | Caminhões Atendidos | Tempo Médio de Fila | Fila Máxima | Comportamento do Sistema |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Cenário A** | `capacity=1` | ~109 | ~12.5 min | ~21.4 min | **Gargalo Crítico:** A demanda média (1 a cada 4 min) supera a capacidade média de 1 balança (1 a cada 4.5 min), gerando fila crescente. |
+| **Cenário B** | `capacity=2` | ~133 | ~1.5 min | ~6.8 min | **Fluxo Otimizado:** Com 2 postos de pesagem, a capacidade máxima dobra para 1 caminhão a cada 2.25 min, absorvendo picos com folga. |
 
 ---
 
 ## 👤 Autor
 
 Desenvolvido por **Luan Gomes**  
-Projeto focado em Simulação Logística, Pesquisa Operacional e Engenharia de Produção.
+Projeto voltado a Simulação Logística, Pesquisa Operacional e Ciência de Dados Aplicada à Cadeia de Suprimentos.

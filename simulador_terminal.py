@@ -40,7 +40,7 @@ def gerador_de_caminhoes(env, balanca, intervalo_medio_chegada):
 print("Rodando simulação...")
 
 env = simpy.Environment()
-balanca = simpy.Resource(env, capacity=1) # Capacidade = 1 balança
+balanca = simpy.Resource(env, capacity=2) # Capacidade = 1 balança
 env.process(gerador_de_caminhoes(env, balanca, intervalo_medio_chegada=4))
 
 # Vamos rodar por mais tempo para gerar mais dados (ex: 8 horas de turno = 480 minutos)
