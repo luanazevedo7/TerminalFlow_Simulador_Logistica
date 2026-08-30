@@ -58,6 +58,8 @@ flowchart TD
 
 ```text
 TerminalFlow_Simulador_Logistica/
+├── screenshot/                    # Pasta contendo as imagens e capturas de tela do dashboard
+│   └── dashboard.png              # Demonstração visual da interface em Streamlit
 ├── simulador_terminal.py          # Script com o motor de simulação SimPy
 ├── dashboard_logistico.py         # Aplicação web com dashboard em Streamlit e Plotly
 ├── resultado_gargalo_balanca.csv  # Base de dados gerada pela simulação
